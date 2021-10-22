@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## Unreleased
+- Nothing yet
+
+
+## 0.1.1 - 2021-10-22
 ### Fixed
 - Fixed bad rounding for negative deltas. Before this fix we would run into
   the following situation:
