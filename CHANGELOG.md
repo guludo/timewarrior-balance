@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ────────────────────────────────
     xyz  103:59    120:00   -17:01
   ```
-  , where the balance should actually be `16:01`. This is fixed now.
+  , where the balance should actually be `-16:01`. This is fixed now.
 
 
 ## 0.1.0
