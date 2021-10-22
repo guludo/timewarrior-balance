@@ -159,7 +159,7 @@ def parse_datetime(s, value_desc):
 
 
 def to_hour_format(minutes, explicity_sign=False):
-    h, m = minutes // 60, abs(minutes) % 60
+    h, m = (1 if minutes > 0 else -1) * (abs(minutes) // 60), abs(minutes) % 60
     if explicity_sign:
         h = f'{h:+}'
     return f'{h}:{m:02d}'
