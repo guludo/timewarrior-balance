@@ -30,6 +30,19 @@ def main():
         for tag in entry.get('tags', [UNTAGGED]):
             deltas[tag] += dt
 
+    owe_start = timew['report_start']
+    owe_end = timew['report_end']
+    if bal_conf.var2bool('round_interval', True):
+        owe_start = timew['report_start'].astimezone()
+        owe_start = owe_start.replace(
+                hour=0, minute=0, second=0, microsecond=0)
+        owe_start = owe_start.astimezone(datetime.timezone.utc)
+        owe_end = timew['report_end'].astimezone()
+        owe_end += datetime.timedelta(days=1)
+        owe_end = owe_end.replace(
+                hour=0, minute=0, second=0, microsecond=0)
+        owe_end = owe_end.astimezone(datetime.timezone.utc)
+
     # Calculate owing deltas
     owing = collections.defaultdict(datetime.timedelta)
     for tag, conf_block in bal_conf.blocks.items():
@@ -37,8 +50,8 @@ def main():
         for period in conf_block['periods']:
             # Get intersection
             per_start, per_end = period['start'], period['end']
-            inter_start = max(per_start, timew['report_start'])
-            inter_end = min(per_end, timew['report_end'])
+            inter_start = max(per_start, owe_start)
+            inter_end = min(per_end, owe_end)
             if inter_start > inter_end:
                 # Intersection is empty
                 continue
@@ -65,8 +78,8 @@ def main():
 
         # Calculate by entry dates
         for date_entry in conf_block['date_entries']:
-            if (timew['report_start'] <= date_entry['date']
-                    and date_entry['date'] < timew['report_end']):
+            if (owe_start <= date_entry['date']
+                    and date_entry['date'] < owe_end):
                 owing[tag] += date_entry['delta']
                 owing[TOTAL] += date_entry['delta']
 
@@ -113,8 +126,8 @@ def main():
         for i in range(len(header))
     )
 
-    print(f'Start: {timew["report_start"].astimezone().ctime()}')
-    print(f'  End: {timew["report_end"].astimezone().ctime()}')
+    print(f'Start: {owe_start.astimezone().ctime()}')
+    print(f'  End: {owe_end.astimezone().ctime()}')
     print()
 
     # Print header

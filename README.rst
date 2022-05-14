@@ -100,7 +100,7 @@ no conflict with other installed extensions::
 
   $ timew bal
   Start: Tue Jan  2 00:00:00 0001
-    End: Mon Oct 11 07:22:47 2021
+    End: Mon Oct 12 00:00:00 2021
 
     Tag  Spent  Allotted  Balance
   ───────────────────────────────
@@ -108,13 +108,6 @@ no conflict with other installed extensions::
   study  11:00     12:00    -1:00
   ───────────────────────────────
   TOTAL  59:30     68:00    -9:30
-
-The report will count how much time is allotted and how much has been spent
-for each configured tag in the interval of the report. The extension uses the
-interval the user provided to the ``timew`` command (which is parsed directly
-by ``timewarrior`` itself). If no period is passed, like in the case above,
-then it will default to be from ``0001-01-02`` until (exclusively) the
-date-time for when the report was called.
 
 Bellow is an example of a report for the current week::
 
@@ -134,7 +127,7 @@ studies, respectively (let's hope this is the beginning of the week 😛).
 
 We can also use dates explicitly. Below is the same report using dates::
 
-  $ timew bal 2021-10-11 to 2021-10-18
+  $ timew bal 2021-10-11 to 2021-10-17
   Start: Mon Oct 11 00:00:00 2021
     End: Mon Oct 18 00:00:00 2021
 
@@ -145,8 +138,31 @@ We can also use dates explicitly. Below is the same report using dates::
   ───────────────────────────────
   TOTAL   5:30     42:00   -36:30
 
-As said before, the interval used by the report is parsed by timewarrior, so
+The interval used by the report is parsed by timewarrior, so
 you can use anything that is recognized by timewarrior.
+
+
+Details about interpretation of intervals
+-----------------------------------------
+
+The report will count how much time is allotted and how much has been spent
+for each configured tag in the interval of the report. The extension uses the
+interval the user provided to the ``timew`` command (which is parsed directly
+by ``timewarrior`` itself). If none is passed, like in the case above, then it
+will default to be from ``0001-01-02`` until the date-time for when the report
+was called.
+
+The interval is closed at the beginning and open (i.e. exclusive) at the end.
+The amount of **spent** time is done inside that interval by summing up each
+track record filtered by Timewarrior. Note that time that is still being
+tracked is also taken into account.
+
+By default, ``timewarrior-balance`` uses a rounded interval for calculating the
+**allotted** time: the start date-time is rounded down to midnight of its
+previous day and the end date-time is rounded up to midnight of its next day.
+If that is not desired, you can set ``round_interval = no`` in the
+configuration file.
+
 
 Configuration file
 ------------------
@@ -157,9 +173,18 @@ In order to use this extension, you need to create a configuration file named
 ``~/.timewarrior/``). This configuration file is were you declare the hours
 you need to spend on your activities.
 
-The configuration file is composed by a series of blocks, where each block is
-a configuration for a tag you want to track. The example below shows the
-content a configuration file with two empty blocks::
+The configuration file is composed by a series of blocks or variable
+assignments.
+
+- Each block is a configuration for a tag you want to track. It will be
+  explained in detail later.
+
+- A variable assignment is a line in the format ``<varname> = <value>``.
+  Currently, the only variable interpreted by ``timewarrior-balance`` is
+  ``round_interval``, but others might be added in the future.
+
+The example below shows the content a configuration file with two empty
+blocks::
 
   # Everything from the "#" to the end of line is considered to be a comment
 

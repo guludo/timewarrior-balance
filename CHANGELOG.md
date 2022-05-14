@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## Unreleased
+### BREAKING CHANGES
+- Intervals for the report are rounded such that the time for the start date
+  is set to 0:00:00 and the end timedate is set to next day at 0:00:00. This
+  provides a less confusing behavior for the user (see
+  https://github.com/guludo/timewarrior-balance/issues/3). Previous behavior
+  can be restored by using `round_interval = false` in the configuration file.
+
 ### Fixed
 - Fixed the fix from `0.1.1`: when negative minutes did not amount to at last
   one hour, they where formatted as if they where positive, for example: `-41`
