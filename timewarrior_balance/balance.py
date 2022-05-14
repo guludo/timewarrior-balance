@@ -32,7 +32,7 @@ def main():
 
     # Calculate owing deltas
     owing = collections.defaultdict(datetime.timedelta)
-    for tag, conf_block in bal_conf.items():
+    for tag, conf_block in bal_conf['tag_blocks'].items():
         # Calculate by periods
         for period in conf_block['periods']:
             # Get intersection
@@ -176,6 +176,7 @@ class ConfParser:
         'to',
         '{',
         '}',
+        '=',
         {
             'name': '<end-of-time>',
             'pattern': re.compile(r'end\s+of\s+time'),
@@ -220,12 +221,22 @@ class ConfParser:
 
     def parse(self):
         self.read_token()
-        conf = {}
+        conf = {'vars': {}, 'tag_blocks': {}}
         while self.cur_token in ('<str>', '<word>', '__untagged__'):
-            tag, block_conf = self.parse_tag_block()
-            if tag in conf:
+            tag = None
+            if self.cur_token == '<word>':
+                varname_or_tag = self.match('<word>')
+                if self.cur_token == '=':
+                    self.match('=')
+                    value = self.match('<word>', '<str>', '<date>', '<hours>')
+                    conf['vars'][varname_or_tag] = value
+                    continue
+                tag = varname_or_tag
+
+            tag, block_conf = self.parse_tag_block(tag)
+            if tag in conf['tag_blocks']:
                 self.error(f'more than two blocks found for tag {tag!r}')
-            conf[tag] = block_conf
+            conf['tag_blocks'][tag] = block_conf
         self.match('<end-of-file>')
         return conf
 
@@ -281,8 +292,9 @@ class ConfParser:
 
         return {'start': start, 'end': end, 'weekday_deltas': weekday_deltas}
 
-    def parse_tag_block(self):
-        tag = self.match('<word>', '__untagged__', '<str>')
+    def parse_tag_block(self, tag=None):
+        if tag is None:
+            tag = self.match('<word>', '__untagged__', '<str>')
         self.match('{')
         block_conf = self.parse_block()
         self.match('}')
