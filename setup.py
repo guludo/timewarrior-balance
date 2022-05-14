@@ -5,7 +5,7 @@ import setuptools
 
 setuptools.setup(
     name='timewarrior-balance',
-    version='0.1.1',
+    version='0.2.0',
     url='https://github.com/guludo/timewarrior-balance',
     description='Get a balance of your timewarrior hours',
     long_description=(pathlib.Path(__file__).parent / 'README.rst').read_text(),

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## Unreleased
+- Nothing yet.
+
+
+## 0.2.0 - 2022-05-14
 ### BREAKING CHANGES
 - Intervals for the report are rounded such that the time for the start date
   is set to 0:00:00 and the end timedate is set to next day at 0:00:00. This
