@@ -282,11 +282,7 @@ class ConfParser:
         return {'start': start, 'end': end, 'weekday_deltas': weekday_deltas}
 
     def parse_tag_block(self):
-        if self.cur_token in ('<word>', '__untagged__'):
-            tag = self.match(self.cur_token)
-        else:
-            tag = self.match('<str>')
-            tag = tag[1:-1]
+        tag = self.match('<word>', '__untagged__', '<str>')
         self.match('{')
         block_conf = self.parse_block()
         self.match('}')

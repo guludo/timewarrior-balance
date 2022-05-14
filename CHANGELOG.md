@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed the fix from `0.1.1`: when negative minutes did not amount to at last
   one hour, they where formatted as if they where positive, for example: `-41`
   would be formatted as `+0:41`. Hopefully we really fixed the issue now.
+- Tags described as strings in the configuration would have the first and last
+  characters because of a bug. That has been fixed.
 
 
 ## 0.1.1 - 2021-10-22
