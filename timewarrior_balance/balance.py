@@ -334,9 +334,14 @@ class ConfParser:
         self.next_head = self.cur_head + len(self.cur_lexeme)
         self.next_lineno = self.cur_lineno + self.cur_lexeme.count('\n')
 
-    def match(self, expected):
-        if self.cur_token != expected:
-            self.error(f'expected {expected}, but found {self.cur_token}')
+    def match(self, expected, *more_expected):
+        all_expected = (expected, *more_expected)
+        if self.cur_token not in all_expected:
+            expected_msg_str = expected
+            if len(all_expected) > 1:
+                expected_msg_str = f'one of ({",".join(all_expected)})'
+            self.error(f'expected {expected_msg_str}, but found {self.cur_token}')
+        expected = self.cur_token
 
         lex = self.cur_lexeme
         self.read_token()
