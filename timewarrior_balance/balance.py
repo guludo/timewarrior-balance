@@ -32,7 +32,7 @@ def main():
 
     # Calculate owing deltas
     owing = collections.defaultdict(datetime.timedelta)
-    for tag, conf_block in bal_conf['tag_blocks'].items():
+    for tag, conf_block in bal_conf.blocks.items():
         # Calculate by periods
         for period in conf_block['periods']:
             # Get intersection
@@ -221,7 +221,7 @@ class ConfParser:
 
     def parse(self):
         self.read_token()
-        conf = {'vars': {}, 'tag_blocks': {}}
+        conf_data = {'vars': {}, 'tag_blocks': {}}
         while self.cur_token in ('<str>', '<word>', '__untagged__'):
             tag = None
             if self.cur_token == '<word>':
@@ -229,16 +229,16 @@ class ConfParser:
                 if self.cur_token == '=':
                     self.match('=')
                     value = self.match('<word>', '<str>', '<date>', '<hours>')
-                    conf['vars'][varname_or_tag] = value
+                    conf_data['vars'][varname_or_tag] = value
                     continue
                 tag = varname_or_tag
 
             tag, block_conf = self.parse_tag_block(tag)
-            if tag in conf['tag_blocks']:
+            if tag in conf_data['tag_blocks']:
                 self.error(f'more than two blocks found for tag {tag!r}')
-            conf['tag_blocks'][tag] = block_conf
+            conf_data['tag_blocks'][tag] = block_conf
         self.match('<end-of-file>')
-        return conf
+        return BalConf(conf_data)
 
     def parse_block(self):
         periods = []
@@ -385,6 +385,33 @@ class ConfParser:
         frag_end = self.confstr.find('\n', self.cur_head)
         frag = self.confstr[self.cur_head:frag_end]
         msg = f'{self.path}:{self.cur_lineno}: {msg}: {frag}'
+        print(msg, file=sys.stderr)
+        exit(1)
+
+
+class BalConf:
+    def __init__(self, data):
+        self.data = data
+
+    @property
+    def blocks(self):
+        return self.data['tag_blocks']
+
+    def getvar(self, name, default=None):
+        return self.data['vars'].get(name, default)
+
+    def var2bool(self, name, default=False):
+        if name not in self.data['vars']:
+            return default
+        s = self.data['vars'][name]
+        if s in ('yes', 'y', 'true', 't'):
+            return True
+        if s in ('no', 'n', 'false', 'f'):
+            return False
+        self.error(f'expected boolean value for variable {name}')
+
+    def error(self, msg):
+        msg = f'conf error: {msg}'
         print(msg, file=sys.stderr)
         exit(1)
 
