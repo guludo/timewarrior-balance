@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## Unreleased
+- Nothing yet.
+
+
+## 0.2.1 - 2022-05-16
 ### Fixed
 - When calculating allotted time, the `round_interval` configuration was not
   being taken into account and that led to buggy behavior. That has been fixed
