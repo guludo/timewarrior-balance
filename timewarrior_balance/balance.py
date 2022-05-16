@@ -32,7 +32,8 @@ def main():
 
     owe_start = timew['report_start']
     owe_end = timew['report_end']
-    if bal_conf.var2bool('round_interval', True):
+    round_interval = bal_conf.var2bool('round_interval', True)
+    if round_interval:
         owe_start = timew['report_start'].astimezone()
         owe_start = owe_start.replace(
                 hour=0, minute=0, second=0, microsecond=0)
@@ -58,11 +59,12 @@ def main():
             # Get interval in local timezone in order to get the weekdays
             inter_start = inter_start.astimezone()
             inter_end = inter_end.astimezone()
-            # Adjust inter_start so that it is exactly at midnight
-            inter_start = inter_start.replace(hour=0,
-                                              minute=0,
-                                              second=0,
-                                              microsecond=0)
+            if round_interval:
+                inter_start = inter_start.replace(
+                        hour=0, minute=0, second=0, microsecond=0)
+                inter_end += datetime.timedelta(days=1)
+                inter_end = inter_end.replace(
+                        hour=0, minute=0, second=0, microsecond=0)
             # Get how many occurrences of each weekday and multiply by deltas
             for days in range(7):
                 d = inter_start + datetime.timedelta(days=days)
