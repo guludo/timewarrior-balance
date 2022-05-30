@@ -35,13 +35,16 @@ def main():
     round_interval = bal_conf.var2bool('round_interval', True)
     if round_interval:
         owe_start = timew['report_start'].astimezone()
-        owe_start = owe_start.replace(
-                hour=0, minute=0, second=0, microsecond=0)
+        if owe_start.time() != datetime.time(0, 0):
+            owe_start = owe_start.replace(
+                    hour=0, minute=0, second=0, microsecond=0)
         owe_start = owe_start.astimezone(datetime.timezone.utc)
+
         owe_end = timew['report_end'].astimezone()
-        owe_end += datetime.timedelta(days=1)
-        owe_end = owe_end.replace(
-                hour=0, minute=0, second=0, microsecond=0)
+        if owe_end.time() != datetime.time(0, 0):
+            owe_end += datetime.timedelta(days=1)
+            owe_end = owe_end.replace(
+                    hour=0, minute=0, second=0, microsecond=0)
         owe_end = owe_end.astimezone(datetime.timezone.utc)
 
     # Calculate owing deltas
@@ -60,11 +63,13 @@ def main():
             inter_start = inter_start.astimezone()
             inter_end = inter_end.astimezone()
             if round_interval:
-                inter_start = inter_start.replace(
-                        hour=0, minute=0, second=0, microsecond=0)
-                inter_end += datetime.timedelta(days=1)
-                inter_end = inter_end.replace(
-                        hour=0, minute=0, second=0, microsecond=0)
+                if inter_start.time() != datetime.time(0, 0):
+                    inter_start = inter_start.replace(
+                            hour=0, minute=0, second=0, microsecond=0)
+                if inter_end.time() != datetime.time(0, 0):
+                    inter_end += datetime.timedelta(days=1)
+                    inter_end = inter_end.replace(
+                            hour=0, minute=0, second=0, microsecond=0)
             # Get how many occurrences of each weekday and multiply by deltas
             for days in range(7):
                 d = inter_start + datetime.timedelta(days=days)

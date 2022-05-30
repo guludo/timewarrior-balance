@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## Unreleased
-- Nothing yet.
+### Fixed
+- Rounding datetimes is performed only when the time component is not already
+  midnight in local timezone.
 
 
 ## 0.2.1 - 2022-05-16
