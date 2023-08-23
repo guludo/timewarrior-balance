@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Rounding datetimes is performed only when the time component is not already
   midnight in local timezone.
+- Total row was not being generated when the report interval does not match any
+  data or configuration entry, which caused an exception to be thrown. The bug
+  was fixed by always initializing the total accumulators.
 
 
 ## 0.2.1 - 2022-05-16

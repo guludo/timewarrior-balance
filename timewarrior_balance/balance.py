@@ -24,6 +24,7 @@ def main():
 
     # Calculate deltas
     deltas = collections.defaultdict(datetime.timedelta)
+    deltas[TOTAL] = datetime.timedelta()
     for entry in timew['entries']:
         dt = entry['end'] - entry['start']
         deltas[TOTAL] += dt
@@ -49,6 +50,7 @@ def main():
 
     # Calculate owing deltas
     owing = collections.defaultdict(datetime.timedelta)
+    owing[TOTAL] = datetime.timedelta()
     for tag, conf_block in bal_conf.blocks.items():
         # Calculate by periods
         for period in conf_block['periods']:
