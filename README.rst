@@ -39,11 +39,12 @@ And below is the content of the configuration file for such example::
       wed   5:30
       thu   6:30
       fri   8:00
+
+      except 2021-10-12 "National holiday"
     }
 
     # Individual entries for adjustment
     2021-10-01  8:00 "Adjustment"
-    2021-10-12 -8:00 "National holiday"
   }
 
   # Hours for the "study" tag
@@ -254,6 +255,9 @@ Below are some examples of periodic blocks::
       wed 8:00
       thu 8:00
       fri 8:00
+
+      except 2022-04-07 "Some national holiday"
+      except 2022-04-20 to 2020-04-27 "Got some vacations and got back on the 27th"
     }
   }
 
@@ -278,22 +282,33 @@ Below is a more formal-like description of the format.
   in order to explicitly have the effect of the latter (useful when the
   periodic block is not the last one).
 
-- ``<rules>`` is a list of pairs in the format ``<weekday> <hours>``,
-  representing the amount of time allotted for days of the week.
+- ``<rules>`` is a list with each entry being one of two things:
 
-  - ``<weekday>`` must be one of: ``mon``, ``tue``, ``wed``, ``thu``,
-    ``fri``, ``sat`` and ``sun``.
+  - a pair in the format ``<weekday> <hours>``, representing the amount of time
+    allotted for a certain day of the week.
 
-  - ``<hours>`` is defined by a number of hours optionally followed by
-    ``:`` and a number of minutes. Examples: ``5``, ``2:15``, ``7:00``.
+    - ``<weekday>`` must be one of: ``mon``, ``tue``, ``wed``, ``thu``, ``fri``,
+      ``sat`` and ``sun``.
 
+    - ``<hours>`` is defined by a number of hours optionally followed by ``:``
+      and a number of minutes. Examples: ``5``, ``2:15``, ``7:00``.
+
+  - an entry in the format ``except <start-date> [to <end-date>] [<note>]``
+    denoting an exception to the block's period. The ``<end-date>`` is optional
+    and defaults to the next date from ``<start-date>``. Those dates follow the
+    same format and interval semantics as for the block's interval. An optional
+    ``<note>`` string enclosed by double-quotes is allowed to describe the
+    exception.
+
+    Each exception entry represents a date interval where the rules do not apply
+    and can be used, for example, to record holidays and vacations.
 
 Date entries
 ''''''''''''
 
 Besides describing periodic rules for allotted time, it is also possible
-to specify allotted time for specific date via **date entries**. This is
-specially useful to make exceptions to the rules (e.g. holidays).
+to specify allotted time for specific date via **date entries**. This is useful
+to make adjustments.
 
 A date entry have a very simple format: ``<date> <hours> [<note>]``:
 
@@ -318,7 +333,7 @@ Below are some examples of uses of date entries::
       fri   8:00
     }
 
-    2021-10-12 -8:00 "National holiday"
+    2021-10-12 -8:00 "Got some time off"
     2021-12-15 +2:00 "Extra hours for this specific day"
 
     # Note that the plus char is optional

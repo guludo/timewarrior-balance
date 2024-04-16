@@ -54,36 +54,69 @@ def main():
     for tag, conf_block in bal_conf.blocks.items():
         # Calculate by periodic blocks
         for pb in conf_block['periodic_blocks']:
-            # Get intersection
-            per_start, per_end = pb['start'], pb['end']
-            inter_start = max(per_start, owe_start)
-            inter_end = min(per_end, owe_end)
-            if inter_start > inter_end:
-                # Intersection is empty
-                continue
-            # Get interval in local timezone in order to get the weekdays
-            inter_start = inter_start.astimezone()
-            inter_end = inter_end.astimezone()
-            if round_interval:
-                if inter_start.time() != datetime.time(0, 0):
-                    inter_start = inter_start.replace(
-                            hour=0, minute=0, second=0, microsecond=0)
-                if inter_end.time() != datetime.time(0, 0):
-                    inter_end += datetime.timedelta(days=1)
-                    inter_end = inter_end.replace(
-                            hour=0, minute=0, second=0, microsecond=0)
-            # Get how many occurrences of each weekday and multiply by deltas
-            for days in range(7):
-                d = inter_start + datetime.timedelta(days=days)
-                if d >= inter_end:
+            # Normalize exceptions so that we do not have overlap among entries
+            exception_intervals = [(exc['start'], exc['end']) for exc in pb['exceptions']]
+            exception_intervals.sort()
+            normalized_exception_intervals = []
+            for exc_start, exc_end in exception_intervals:
+                if len(normalized_exception_intervals) == 0:
+                    normalized_exception_intervals.append((exc_start, exc_end))
+                    continue
+
+                exc_prev_start, exc_prev_end = normalized_exception_intervals[-1]
+                if exc_start <= exc_prev_end:
+                    normalized_exception_intervals[-1] = exc_prev_start, max(exc_end, exc_prev_end)
+                else:
+                    normalized_exception_intervals.append((exc_start, exc_end))
+
+            # Generate "fragmented" periods: split the period by exceptions
+            fragmented_periods = [(pb['start'], pb['end'])]
+            for exc_start, exc_end in normalized_exception_intervals:
+                cur_start, cur_end = fragmented_periods[-1]
+                if exc_start >= cur_end:
+                    # Intersection is empty and all remaining exceptions do not
+                    # apply
                     break
-                # Number of occurrences is the ceil division by of number of
-                # days by 7, that is, the number of weeks found
-                num_occurrences = ((inter_end - d).days + 6) // 7
-                weekday = d.weekday()
-                delta = num_occurrences * pb['weekday_deltas'][weekday]
-                owing[tag] += delta
-                owing[TOTAL] += delta
+                elif exc_end <= cur_start:
+                    # Intersection is empty, but next exceptions might still apply
+                    continue
+
+                if cur_start < exc_start:
+                    fragmented_periods[-1] = cur_start, exc_start
+
+                if cur_end > exc_end:
+                    fragmented_periods.append((exc_end, cur_end))
+
+            for per_start, per_end in fragmented_periods:
+                # Get intersection
+                inter_start = max(per_start, owe_start)
+                inter_end = min(per_end, owe_end)
+                if inter_start > inter_end:
+                    # Intersection is empty
+                    continue
+                # Get interval in local timezone in order to get the weekdays
+                inter_start = inter_start.astimezone()
+                inter_end = inter_end.astimezone()
+                if round_interval:
+                    if inter_start.time() != datetime.time(0, 0):
+                        inter_start = inter_start.replace(
+                                hour=0, minute=0, second=0, microsecond=0)
+                    if inter_end.time() != datetime.time(0, 0):
+                        inter_end += datetime.timedelta(days=1)
+                        inter_end = inter_end.replace(
+                                hour=0, minute=0, second=0, microsecond=0)
+                # Get how many occurrences of each weekday and multiply by deltas
+                for days in range(7):
+                    d = inter_start + datetime.timedelta(days=days)
+                    if d >= inter_end:
+                        break
+                    # Number of occurrences is the ceil division by of number of
+                    # days by 7, that is, the number of weeks found
+                    num_occurrences = ((inter_end - d).days + 6) // 7
+                    weekday = d.weekday()
+                    delta = num_occurrences * pb['weekday_deltas'][weekday]
+                    owing[tag] += delta
+                    owing[TOTAL] += delta
 
         # Calculate by entry dates
         for date_entry in conf_block['date_entries']:
@@ -194,6 +227,7 @@ class ConfParser:
 
     token_confs = [
         '__untagged__',
+        'except',
         'from',
         'to',
         '{',
@@ -298,13 +332,29 @@ class ConfParser:
         start, end = self.parse_period()
 
         weekday_deltas = [datetime.timedelta() for weekday in range(7)]
+        exceptions = []
         self.match('{')
-        while self.cur_token == '<weekday>':
-            weekday = self.match('<weekday>')
-            weekday_deltas[weekday] += self.match('<hours>')
+        while True:
+            if self.cur_token == '<weekday>':
+                weekday = self.match('<weekday>')
+                weekday_deltas[weekday] += self.match('<hours>')
+            elif self.cur_token == 'except':
+                self.match('except')
+                exc_start, exc_end = self.parse_period()
+                if exc_end is None:
+                    exc_end = exc_start + datetime.timedelta(days=1)
+                exc_note = self.match('<str>') if self.cur_token == '<str>' else ''
+                exceptions.append({'start': exc_start, 'end': exc_end, 'note': exc_note})
+            else:
+                break
         self.match('}')
 
-        return {'start': start, 'end': end, 'weekday_deltas': weekday_deltas}
+        return {
+            'start': start,
+            'end': end,
+            'weekday_deltas': weekday_deltas,
+            'exceptions': exceptions,
+        }
 
     def parse_period(self):
         start = self.match('<date>')

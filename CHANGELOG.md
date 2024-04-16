@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## Unreleased
+### Added
+- Added support for specifying exceptions in periodic blocks via the `except`
+  keyword. See the README for details.
+
 ### Fixed
 - Rounding datetimes is performed only when the time component is not already
   midnight in local timezone.
