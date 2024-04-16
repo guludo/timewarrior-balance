@@ -295,6 +295,18 @@ class ConfParser:
 
     def parse_periodic_block(self):
         self.match('from')
+        start, end = self.parse_period()
+
+        weekday_deltas = [datetime.timedelta() for weekday in range(7)]
+        self.match('{')
+        while self.cur_token == '<weekday>':
+            weekday = self.match('<weekday>')
+            weekday_deltas[weekday] += self.match('<hours>')
+        self.match('}')
+
+        return {'start': start, 'end': end, 'weekday_deltas': weekday_deltas}
+
+    def parse_period(self):
         start = self.match('<date>')
         if self.cur_token == 'to':
             self.match('to')
@@ -305,14 +317,7 @@ class ConfParser:
         else:
             end = None
 
-        weekday_deltas = [datetime.timedelta() for weekday in range(7)]
-        self.match('{')
-        while self.cur_token == '<weekday>':
-            weekday = self.match('<weekday>')
-            weekday_deltas[weekday] += self.match('<hours>')
-        self.match('}')
-
-        return {'start': start, 'end': end, 'weekday_deltas': weekday_deltas}
+        return start, end
 
     def parse_tag_block(self, tag=None):
         if tag is None:
