@@ -52,10 +52,10 @@ def main():
     owing = collections.defaultdict(datetime.timedelta)
     owing[TOTAL] = datetime.timedelta()
     for tag, conf_block in bal_conf.blocks.items():
-        # Calculate by periods
-        for period in conf_block['periods']:
+        # Calculate by periodic blocks
+        for pb in conf_block['periodic_blocks']:
             # Get intersection
-            per_start, per_end = period['start'], period['end']
+            per_start, per_end = pb['start'], pb['end']
             inter_start = max(per_start, owe_start)
             inter_end = min(per_end, owe_end)
             if inter_start > inter_end:
@@ -81,7 +81,7 @@ def main():
                 # days by 7, that is, the number of weeks found
                 num_occurrences = ((inter_end - d).days + 6) // 7
                 weekday = d.weekday()
-                delta = num_occurrences * period['weekday_deltas'][weekday]
+                delta = num_occurrences * pb['weekday_deltas'][weekday]
                 owing[tag] += delta
                 owing[TOTAL] += delta
 
@@ -263,25 +263,25 @@ class ConfParser:
         return BalConf(conf_data)
 
     def parse_block(self):
-        periods = []
+        periodic_blocks = []
         date_entries = []
         while True:
             if self.cur_token == 'from':
-                periods.append(self.parse_period())
+                periodic_blocks.append(self.parse_periodic_block())
             elif self.cur_token == '<date>':
                 date_entries.append(self.parse_date_entry())
             else:
                 break
 
-        for i in range(len(periods) - 1):
-            if periods[i]['end'] is None:
-                periods[i]['end'] = periods[i + 1]['start']
+        for i in range(len(periodic_blocks) - 1):
+            if periodic_blocks[i]['end'] is None:
+                periodic_blocks[i]['end'] = periodic_blocks[i + 1]['start']
 
-        for p in periods:
-            if p['end'] == 'end-of-time' or p['end'] is None:
-                p['end'] = self.default_end
+        for pb in periodic_blocks:
+            if pb['end'] == 'end-of-time' or pb['end'] is None:
+                pb['end'] = self.default_end
 
-        return {'periods': periods, 'date_entries': date_entries}
+        return {'periodic_blocks': periodic_blocks, 'date_entries': date_entries}
 
     def parse_date_entry(self):
         date = self.match('<date>')
@@ -293,7 +293,7 @@ class ConfParser:
 
         return {'date': date, 'delta': delta, 'note': note}
 
-    def parse_period(self):
+    def parse_periodic_block(self):
         self.match('from')
         start = self.match('<date>')
         if self.cur_token == 'to':
